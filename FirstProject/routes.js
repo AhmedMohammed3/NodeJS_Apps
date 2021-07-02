@@ -2,6 +2,7 @@ const fs = require('fs');
 
 const requestHandler = (req, res) => {
 
+
     const url = req.url;
     const method = req.method;
     if (url === '/') {
@@ -29,7 +30,6 @@ const requestHandler = (req, res) => {
     if (url === '/message' && method === 'POST') {
         const body = [];
         req.on('data', (chunk) => {
-            console.log('chunk:', chunk);
             body.push(chunk);
         });
 
