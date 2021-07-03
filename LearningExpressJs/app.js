@@ -1,29 +1,21 @@
 //==============Core Modules========
 //==============Third Party=========
 const express = require("express");
-const bodyParser = require("body-parser");
+const path = require("path");
 //==============My Code Files=======
+const adminRoutes = require("./routes/admin");
+const shopRoutes = require("./routes/shop");
+const pageNotFoundRoute = require("./routes/404");
+const routeDir = require("./util/path");
 //==================================
 const app = express();
 
-app.use(
-  express.urlencoded({
-    extended: false,
-  })
-);
+app.use(express.urlencoded({ extended: false }));
+app.use(express.static(path.join(routeDir, "public")));
 
-app.use("/add-product", (req, res, next) => {
-  res.send(
-    '<form action="/product" method="POST"><input type="text" name="title"><button type="submit">Add Product</button></form>'
-  );
-});
+app.use("/admin", adminRoutes);
+app.use(shopRoutes);
 
-app.post("/product", (req, res, next) => {
-  console.log(req.body);
-  res.redirect("/");
-});
+app.use(pageNotFoundRoute);
 
-app.use("/", (req, res, next) => {
-  res.send("<h1>Second Page</h1>");
-});
 app.listen(1234);
