@@ -2,7 +2,6 @@
 //==============Third Party=========
 const express = require("express");
 const path = require("path");
-const expressHbs = require("express-handlebars");
 //==============My Code Files=======
 const adminData = require("./routes/admin");
 const shopRoutes = require("./routes/shop");
@@ -11,15 +10,15 @@ const routeDir = require("./util/path");
 //==================================
 const app = express();
 
-app.engine(
-  "hbs",
-  expressHbs({
-    extname: "hbs",
-    layoutsDir: 'views/layouts/',
-    defaultLayout: 'main-layout',
-  })
-);
-app.set("view engine", "hbs");
+// app.engine(
+//   "hbs",
+//   expressHbs({
+//     extname: "hbs",
+//     layoutsDir: 'views/layouts/',
+//     defaultLayout: 'main-layout',
+//   })
+// );
+app.set("view engine", "ejs");
 
 // app.set("view engine", "pug");
 app.set("views", "views");
