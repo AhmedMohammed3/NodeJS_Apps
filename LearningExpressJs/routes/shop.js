@@ -14,7 +14,10 @@ router.get("/", (req, res, next) => {
     prods: products,
     pageTitle: "LoL Shop",
     path: "/",
-  }); // this is the shop.pug file
+    hasProducts: products.length > 0,
+    activeShop: true,
+    productCSS: true,
+  });
 });
 
 module.exports = router;
