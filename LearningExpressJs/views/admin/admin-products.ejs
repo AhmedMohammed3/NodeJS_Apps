@@ -26,8 +26,9 @@
                                     </p>
                                 </div>
                                 <div class="card__actions">
-                                    <form action="/add-to-cart" method="post">
-                                        <button class="btn">Add to Cart</button>
+                                    <a href="/admin/products/edit-product/<%= product.id %>" class="btn">Edit</a>
+                                    <form action="/admin/delete-product" method="POST">
+                                        <button class="btn" type="submit">Delete</button>
                                     </form>
                                 </div>
                             </article>
