@@ -2,21 +2,28 @@ const Product = require('../models/product-model');
 const Cart = require('../models/cart-model');
 
 exports.getProducts = (req, res, next) => {
-    const products = Product.fetchAll(
-        //     products => {
-        //     res.render("shop/product-list", {
-        //         prods: products,
-        //         pageTitle: "All Products",
-        //         path: "/products"
-        //     });
-        // }
-    ).then(([rows]) => {
+    Product.findAll().then(products => {
         res.render("shop/product-list", {
-            prods: rows,
+            prods: products,
             pageTitle: "All Products",
             path: "/products"
         });
     }).catch(err => console.log(err));
+    // const products = Product.fetchAll(
+    //     //     products => {
+    //     //     res.render("shop/product-list", {
+    //     //         prods: products,
+    //     //         pageTitle: "All Products",
+    //     //         path: "/products"
+    //     //     });
+    //     // }
+    // ).then(([products]) => {
+    //     res.render("shop/product-list", {
+    //         prods: products,
+    //         pageTitle: "All Products",
+    //         path: "/products"
+    //     });
+    // }).catch(err => console.log(err));
     // console.log(adminData.products);
     // res.sendFile(path.join(routeDir, "views", "shop.html"));
 }
@@ -24,43 +31,63 @@ exports.getProducts = (req, res, next) => {
 exports.getProduct = (req, res, next) => {
     const productID = req.params.productID;
     // console.log(productID);
-    Product.findById(productID
-        // productID, (product) => {
-        //     res.render("shop/product-detail", {
-        //         product: product,
-        //         pageTitle: "Product " + product.title + " Details",
-        //         path: "/products"
-        //     });
-        // }
-    ).then(([product]) => {
-        res.render("shop/product-detail", {
-            product: product[0],
-            pageTitle: "\"" + product[0].title + "\" Details",
-            path: "/products"
-        });
-    }).catch(err => console.log(err));
+    // Product.findAll({
+    //     where: {
+    //         id: productID
+    //     }
+    // })
+        Product.findByPk(productID)
+        .then(product => {
+            res.render("shop/product-detail", {
+                product: product,
+                pageTitle: "\"" + product.title + "\" Details",
+                path: "/products"
+            });
+        }).catch(err => console.log(err));
+    // Product.findById(productID
+    //     // productID, (product) => {
+    //     //     res.render("shop/product-detail", {
+    //     //         product: product,
+    //     //         pageTitle: "Product " + product.title + " Details",
+    //     //         path: "/products"
+    //     //     });
+    //     // }
+    // ).then(([product]) => {
+    //     res.render("shop/product-detail", {
+    //         product: product[0],
+    //         pageTitle: "\"" + product[0].title + "\" Details",
+    //         path: "/products"
+    //     });
+    // }).catch(err => console.log(err));
 
-    // res.redirect('/');
+    // // res.redirect('/');
 }
 
 exports.getIndex = (req, res, next) => {
-    const products = Product.fetchAll(
-        // products => {
-        // res.render("shop/index", {
-        //     prods: products,
-        //     pageTitle: "LoL Shop",
-        //     path: "/"
-        // });
-        // }
-    ).then(([products, fieldData]) => {
-
+    Product.findAll().then(products => {
         res.render("shop/index", {
             prods: products,
             pageTitle: "LoL Shop",
             path: "/"
         });
-
     }).catch(err => console.log(err));
+    // Product.fetchAll(
+    //     // products => {
+    //     // res.render("shop/index", {
+    //     //     prods: products,
+    //     //     pageTitle: "LoL Shop",
+    //     //     path: "/"
+    //     // });
+    //     // }
+    // ).then(([products, fieldData]) => {
+
+    //     res.render("shop/index", {
+    //         prods: products,
+    //         pageTitle: "LoL Shop",
+    //         path: "/"
+    //     });
+
+    // }).catch(err => console.log(err));
 }
 
 exports.getCart = (req, res, next) => {
