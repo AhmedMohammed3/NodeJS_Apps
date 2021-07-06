@@ -3,15 +3,20 @@
 
     <body>
         <%- include('../includes/navigation.ejs') %>
-            <main>
-                Title:
-                <%= product.title %><br>
-                    Image: <img width="100" height="100" src="<%= product.imageUrl %>" alt="<%= product.name %>"><br>
-                    Desc:
-                    <%= product.description %><br>
-                        price:
-                        <%= product.price %><br>
-                            id:
-                            <%= product.id %><br>
+            <main class="centered">
+                <h1>
+                    <%= product.title %>
+                </h1>
+                <hr>
+                <div>
+                    <img src="<%= product.imageUrl %>" alt="<%= product.title %>">
+                </div>
+                <h2></h2>
+                <%= product.price %>
+                    </h2>
+                    <p>
+                        <%= product.description %><br>
+                    </p>
+                    <%- include('../includes/add-to-cart.ejs') %>
             </main>
             <%- include('../includes/end.ejs') %>
