@@ -10,6 +10,8 @@ const routeDir = require("./util/path");
 const db = require('./util/database');
 const Product = require('./models/product-model');
 const User = require('./models/user-model');
+const Cart = require("./models/cart-model");
+const CartItem = require("./models/cart-item-model");
 //==================================
 const app = express();
 
@@ -43,8 +45,16 @@ app.use(shopRoutes);
 
 app.use(pageNotFoundRoute);
 
-Product.belongsTo(User, { constraints: true, onDelete: 'CASCADE' });
-User.hasMany(Product);
+Product.belongsTo(User, { constraints: true, onDelete: 'CASCADE' }); // 1 To 1
+User.hasMany(Product); // 1 To M
+
+User.hasOne(Cart); // 1 to 1
+Cart.belongsTo(User); // 1 To 1
+
+Cart.belongsToMany(Product, { through: CartItem }); // 1 To M
+Product.belongsToMany(Cart, { through: CartItem }); // 1 To M
+
+
 
 // db.sync({ force: true })
 db.sync()
@@ -55,6 +65,8 @@ db.sync()
         }
         return user;
     }).then(user => {
+        return user.createCart();
+    }).then(cart => {
         app.listen(1234);
     })
     .catch(err => console.log(err));
