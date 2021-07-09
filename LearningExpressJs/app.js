@@ -7,36 +7,22 @@ const adminRoutes = require("./routes/admin-route");
 const shopRoutes = require("./routes/shop-route");
 const pageNotFoundRoute = require("./routes/404-route");
 const routeDir = require("./util/path");
-const db = require('./util/database');
-const Product = require('./models/product-model');
-const User = require('./models/user-model');
-const Cart = require("./models/cart-model");
-const CartItem = require("./models/cart-item-model");
-const Order = require("./models/order-model");
-const OrderItem = require("./models/order-items-model");
+const { mongoConnect } = require("./util/database");
+const User = require("./models/user-model");
 //==================================
 const app = express();
 
-// app.engine(
-//   "hbs",
-//   expressHbs({
-//     extname: "hbs",
-//     layoutsDir: 'views/layouts/',
-//     defaultLayout: 'main-layout',
-//   })
-// );
 app.set("view engine", "ejs");
 
-// app.set("view engine", "pug");
 app.set("views", "views");
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(routeDir, "public")));
 
 app.use((req, res, next) => {
-    User.findByPk(1)
+    User.findByID('60e79a9171fd7cc39169d832')
         .then(user => {
-            req.user = user;
+            req.user = new User(user.name, user.email, user.cart, user._id);
             next();
         })
         .catch(err => console.log(err));
@@ -47,34 +33,6 @@ app.use(shopRoutes);
 
 app.use(pageNotFoundRoute);
 
-Product.belongsTo(User, { constraints: true, onDelete: 'CASCADE' }); // 1 To 1
-User.hasMany(Product); // 1 To M
-
-User.hasOne(Cart); // 1 to 1
-Cart.belongsTo(User); // 1 To 1
-
-Cart.belongsToMany(Product, { through: CartItem }); // 1 To M
-Product.belongsToMany(Cart, { through: CartItem }); // 1 To M
-
-Order.belongsTo(User);
-User.hasMany(Order);
-
-Order.belongsToMany(Product, { through: OrderItem }); // 1 To M
-// Product.belongsToMany(Order, { through: OrderItem }); // 1 To M
-
-// db.sync({ force: true })
-db.sync()
-    .then(_ => User.findByPk(1))
-    .then(user => {// TODO: Remove this dummy user
-        if (!user) {
-            return User.create({ name: 'Hassan', email: 'hassan@lol.com' });
-        }
-        return user;
-    }).then(user => {
-        return user.createCart();
-    }).then(cart => {
-        app.listen(1234);
-    })
-    .catch(err => console.log(err));
-
-
+mongoConnect(() => {
+    app.listen(1234);
+});
