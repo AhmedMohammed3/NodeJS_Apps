@@ -9,7 +9,7 @@ const MongoDBStore = require('connect-mongodb-session')(session);
 const adminRoutes = require("./routes/admin-route");
 const shopRoutes = require("./routes/shop-route");
 const authRoutes = require('./routes/auth-route');
-const pageNotFoundRoute = require("./routes/404-route");
+const errorRoute = require("./routes/error-route");
 const routeDir = require("./util/path");
 const User = require("./models/user-model");
 //==================================
@@ -22,7 +22,6 @@ const store = new MongoDBStore({
 });
 
 app.set("view engine", "ejs");
-
 app.set("views", "views");
 
 app.use(express.urlencoded({ extended: false }));
@@ -49,8 +48,7 @@ app.use((req, res, next) => {
 app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
-
-app.use(pageNotFoundRoute);
+app.use(errorRoute);
 
 mongoose.connect(
     MONGODB_URI,
