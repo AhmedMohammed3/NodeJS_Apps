@@ -9,7 +9,8 @@ exports.getProducts = (req, res, next) => {
             res.render("admin/admin-products", {
                 prods: products,
                 pageTitle: "Admin Panel - All Products",
-                path: "/admin/products"
+                path: "/admin/products",
+                isAuthenticated: req.session.isAuthenticated
             });
         })
         .catch(err => console.log(err));
@@ -19,14 +20,15 @@ exports.getAddProduct = (req, res, next) => {
     res.render("admin/admin-edit-product", {
         pageTitle: "Admin Panel - Add Products",
         path: "/admin/add-product",
-        editing: false
+        editing: false,
+        isAuthenticated: req.session.isAuthenticated
     });
 }
 
 exports.getEditProduct = (req, res, next) => {
     const editMode = req.query.edit;
     if (!editMode) {
-        return res.redirect('/');
+        return res.redirect('/admin/products');
     }
     const productID = req.params.productID;
     Product.findById(productID)
@@ -38,7 +40,8 @@ exports.getEditProduct = (req, res, next) => {
                 pageTitle: "Admin Products - Edit Product",
                 path: "/admin/edit-product",
                 editing: editMode,
-                product: product
+                product: product,
+                isAuthenticated: req.session.isAuthenticated
             })
         })
         .catch(err => console.log(err));
@@ -64,7 +67,6 @@ exports.postEditProduct = (req, res, next) => {
     const updatedPrice = req.body.price;
     const updatedDescription = req.body.description;
 
-    // const product = new Product(updatedTitle, updatedPrice, updatedImageUrl, updatedDescription, productID);
     Product.findById(productID)
         .then(product => {
             product.title = updatedTitle;
