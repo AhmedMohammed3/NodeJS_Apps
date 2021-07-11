@@ -9,8 +9,8 @@ exports.getProducts = (req, res, next) => {
             res.render("shop/product-list", {
                 prods: products,
                 pageTitle: "All Products",
-                path: "/products",
-                isAuthenticated: req.session.isAuthenticated
+                path: "/products"
+
             });
         }).catch(err => console.log(err));
 }
@@ -22,8 +22,8 @@ exports.getProduct = (req, res, next) => {
             res.render("shop/product-detail", {
                 product: product,
                 pageTitle: "\"" + product.title + "\" Details",
-                path: "/products",
-                isAuthenticated: req.session.isAuthenticated
+                path: "/products"
+
             });
         }).catch(err => console.log(err));
 }
@@ -34,8 +34,7 @@ exports.getIndex = (req, res, next) => {
             res.render("shop/index", {
                 prods: products,
                 pageTitle: "LoL Shop",
-                path: "/",
-                isAuthenticated: req.session.isAuthenticated
+                path: "/"
             });
         }).catch(err => console.log(err));
 }
@@ -49,8 +48,8 @@ exports.getCart = (req, res, next) => {
             res.render('shop/cart', {
                 path: '/cart',
                 pageTitle: 'Your Cart',
-                products: cartProducts,
-                isAuthenticated: req.session.isAuthenticated
+                products: cartProducts
+
             });
         })
         .catch(err => console.log(err));
@@ -89,7 +88,7 @@ exports.postOrder = (req, res, next) => {
             });
             const order = new Order({
                 user: {
-                    name: req.user.name,
+                    email: req.user.email,
                     userID: req.user
                 },
                 products: products
@@ -112,8 +111,7 @@ exports.getOrders = (req, res, next) => {
             res.render('shop/orders', {
                 orders: orders,
                 path: '/orders',
-                pageTitle: 'Your Orders',
-                isAuthenticated: req.session.isAuthenticated
+                pageTitle: 'Your Orders'
             });
         })
         .catch(err => console.log(err));
@@ -122,7 +120,6 @@ exports.getOrders = (req, res, next) => {
 exports.getCheckout = (req, res, next) => {
     res.render('shop/chekout', {
         path: '/checkout',
-        pageTitle: 'Checkout',
-        isAuthenticated: req.session.isAuthenticated
+        pageTitle: 'Checkout'
     })
 }

@@ -4,8 +4,7 @@ exports.getAddProduct = (req, res, next) => {
     res.render("admin/admin-edit-product", {
         pageTitle: "Admin Panel - Add Products",
         path: "/admin/add-product",
-        editing: false,
-        isAuthenticated: req.session.isAuthenticated
+        editing: false
     });
 }
 
@@ -37,8 +36,8 @@ exports.getEditProduct = (req, res, next) => {
                 pageTitle: "Admin Products - Edit Product",
                 path: "/admin/edit-product",
                 editing: editMode,
-                product: product,
-                isAuthenticated: req.session.isAuthenticated
+                product: product
+                
             })
         })
         .catch(err => console.log(err));
@@ -72,8 +71,8 @@ exports.getProducts = (req, res, next) => {
             res.render("admin/admin-products", {
                 prods: products,
                 pageTitle: "Admin Panel - All Products",
-                path: "/admin/products",
-                isAuthenticated: req.session.isAuthenticated
+                path: "/admin/products"
+                
             });
         })
         .catch(err => console.log(err));
