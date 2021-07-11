@@ -32,12 +32,15 @@ exports.getEditProduct = (req, res, next) => {
             if (!product) {
                 return res.redirect('/admin/products');
             }
+            if (product.userID.toString() !== req.user._id.toString()) {
+                return res.redirect('/page-not-found');
+            }
             res.render("admin/admin-edit-product", {
                 pageTitle: "Admin Products - Edit Product",
                 path: "/admin/edit-product",
                 editing: editMode,
                 product: product
-                
+
             })
         })
         .catch(err => console.log(err));
@@ -52,27 +55,30 @@ exports.postEditProduct = (req, res, next) => {
 
     Product.findById(productID)
         .then(product => {
+            if (product.userID.toString() !== req.user._id.toString()) {
+                return res.redirect('/page-not-found');
+            }
             product.title = updatedTitle;
             product.price = updatedPrice;
             product.imageUrl = updatedImageUrl;
             product.description = updatedDescription;
-            return product.save();
-        })
-        .then(result => {
-            console.log("Updated product");
-            res.redirect('/admin/products');
+            return product.save().then(result => {
+                console.log("Updated product");
+                res.redirect('/admin/products');
+            })
         })
         .catch(err => console.log(err));
+
 }
 
 exports.getProducts = (req, res, next) => {
-    Product.find()
+    Product.find({ userID: req.user })
         .then(products => {
             res.render("admin/admin-products", {
                 prods: products,
                 pageTitle: "Admin Panel - All Products",
                 path: "/admin/products"
-                
+
             });
         })
         .catch(err => console.log(err));
@@ -80,13 +86,15 @@ exports.getProducts = (req, res, next) => {
 
 exports.postDeleteProduct = (req, res, next) => {
     const productID = req.body.productID;
-    Product.findByIdAndRemove(productID)
-        .then(_ => {
-            console.log("Product Deleted");
-            res.redirect('/admin/products');
+    Product.deleteOne({ _id: productID, userID: req.user })
+        .then(result => {
+            if (result.deletedCount > 0) {
+                console.log("Product Deleted");
+                return res.redirect('/admin/products');
+            }
+            return res.redirect('/page-not-found');
         })
         .catch(err => console.log(err));
-
 }
 
 
