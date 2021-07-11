@@ -1,4 +1,5 @@
 const { validationResult } = require('express-validator');
+const { fireErrorHandler } = require('../helpers/controllers-helper');
 
 const Product = require('../models/product-model');
 
@@ -36,12 +37,19 @@ exports.postAddProduct = (req, res, next) => {
                 validationErrors: errors.array()
             });
     }
-    const product = new Product({ title: title, price: price, description: description, imageUrl: imageUrl, userID: req.user });
+    const product = new Product({
+        title: undefined,
+        price: price,
+        description: description,
+        imageUrl: imageUrl,
+        userID: req.user
+    });
     product.save()
         .then(_ => {
             console.log("Created Product!");
             res.redirect("/admin/products");
-        }).catch(err => console.log("err", err));
+        })
+        .catch(err => fireErrorHandler(err, next));
 }
 
 exports.getEditProduct = (req, res, next) => {
@@ -69,7 +77,7 @@ exports.getEditProduct = (req, res, next) => {
                 validationErrors: []
             })
         })
-        .catch(err => console.log(err));
+        .catch(err => fireErrorHandler(err, next));
 }
 
 exports.postEditProduct = (req, res, next) => {
@@ -113,7 +121,7 @@ exports.postEditProduct = (req, res, next) => {
                 res.redirect('/admin/products');
             })
         })
-        .catch(err => console.log(err));
+        .catch(err => fireErrorHandler(err, next));
 
 }
 
@@ -127,7 +135,7 @@ exports.getProducts = (req, res, next) => {
 
             });
         })
-        .catch(err => console.log(err));
+        .catch(err => fireErrorHandler(err, next));
 }
 
 exports.postDeleteProduct = (req, res, next) => {
@@ -140,7 +148,7 @@ exports.postDeleteProduct = (req, res, next) => {
             }
             return res.redirect('/page-not-found');
         })
-        .catch(err => console.log(err));
+        .catch(err => fireErrorHandler(err, next));
 }
 
 
