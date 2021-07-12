@@ -4,19 +4,35 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 
 const Product = require('../models/product-model');
-
-// const Cart = require('../models/cart-model');
 const Order = require('../models/order-model');
-const { fireErrorHandler } = require('../helpers/error-helper');
+
+const { PRODUCTS_PER_PAGE } = require('../globals/constants');
+const { fireErrorHandler } = require('../globals/error-helper');
 
 exports.getProducts = (req, res, next) => {
+    const page = +req.query.page || 1;
+    let totalNumOfProducts;
+
     Product.find()
+        .countDocuments()
+        .then(numProducts => {
+            totalNumOfProducts = numProducts;
+            return Product.find()
+                .skip((page - 1) * PRODUCTS_PER_PAGE)
+                .limit(PRODUCTS_PER_PAGE);
+        })
         .then(products => {
+            // const numOfPages = totalNumOfProducts / PRODUCTS_PER_PAGE;
             res.render("shop/product-list", {
                 prods: products,
                 pageTitle: "All Products",
-                path: "/products"
-
+                path: "/products",
+                currentPage: page,
+                hasNextPage: PRODUCTS_PER_PAGE * page < totalNumOfProducts,
+                hasPreviousPage: page > 1,
+                nextPage: page + 1,
+                previousPage: page - 1,
+                lastPage: Math.ceil(totalNumOfProducts / PRODUCTS_PER_PAGE)
             });
         })
         .catch(err => fireErrorHandler(err, next));
@@ -37,12 +53,29 @@ exports.getProduct = (req, res, next) => {
 }
 
 exports.getIndex = (req, res, next) => {
-    Product.find().
-        then(products => {
+    const page = +req.query.page || 1;
+    let totalNumOfProducts;
+
+    Product.find()
+        .countDocuments()
+        .then(numProducts => {
+            totalNumOfProducts = numProducts;
+            return Product.find()
+                .skip((page - 1) * PRODUCTS_PER_PAGE)
+                .limit(PRODUCTS_PER_PAGE);
+        })
+        .then(products => {
+            // const numOfPages = totalNumOfProducts / PRODUCTS_PER_PAGE;
             res.render("shop/index", {
                 prods: products,
                 pageTitle: "LoL Shop",
-                path: "/"
+                path: "/",
+                currentPage: page,
+                hasNextPage: PRODUCTS_PER_PAGE * page < totalNumOfProducts,
+                hasPreviousPage: page > 1,
+                nextPage: page + 1,
+                previousPage: page - 1,
+                lastPage: Math.ceil(totalNumOfProducts / PRODUCTS_PER_PAGE)
             });
         })
         .catch(err => fireErrorHandler(err, next));

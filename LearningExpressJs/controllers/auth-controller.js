@@ -6,8 +6,8 @@ const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
 
 const User = require('../models/user-model');
-const { sendMail } = require('../helpers/send-email-helper');
-const { fireErrorHandler } = require('../helpers/error-helper');
+const { sendMail } = require('../globals/send-email-helper');
+const { fireErrorHandler } = require('../globals/error-helper');
 
 
 exports.getLogin = (req, res, next) => {

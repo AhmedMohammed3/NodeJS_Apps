@@ -1,7 +1,8 @@
-const fileHelper = require('../helpers/file-helper');
+const fileHelper = require('../globals/file-helper');
 
 const { validationResult } = require('express-validator');
-const { fireErrorHandler } = require('../helpers/error-helper');
+const { fireErrorHandler } = require('../globals/error-helper');
+const { PRODUCTS_PER_PAGE } = require('../globals/constants');
 
 const Product = require('../models/product-model');
 const User = require('../models/user-model');
@@ -151,13 +152,30 @@ exports.postEditProduct = (req, res, next) => {
 }
 
 exports.getProducts = (req, res, next) => {
-    Product.find({ userID: req.user })
+    const page = +req.query.page || 1;
+    let totalNumOfProducts;
+
+    Product.find()
+        .countDocuments()
+        .then(numProducts => {
+            totalNumOfProducts = numProducts;
+            return Product.find()
+                .skip((page - 1) * PRODUCTS_PER_PAGE)
+                .limit(PRODUCTS_PER_PAGE);
+        })
         .then(products => {
+            // const numOfPages = totalNumOfProducts / PRODUCTS_PER_PAGE;
             res.render("admin/admin-products", {
                 prods: products,
                 pageTitle: "Admin Panel - All Products",
-                path: "/admin/products",
-                errorMessage: []
+                path: "/admin/productss",
+                errorMessage: [],
+                currentPage: page,
+                hasNextPage: PRODUCTS_PER_PAGE * page < totalNumOfProducts,
+                hasPreviousPage: page > 1,
+                nextPage: page + 1,
+                previousPage: page - 1,
+                lastPage: Math.ceil(totalNumOfProducts / PRODUCTS_PER_PAGE)
             });
         })
         .catch(err => fireErrorHandler(err, next));
