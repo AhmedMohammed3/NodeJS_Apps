@@ -2,17 +2,13 @@
 const crypto = require('crypto');
 
 const bcrypt = require('bcryptjs');
-const nodemailer = require('nodemailer');
-const sendgridTransport = require('nodemailer-sendgrid-transport')
+
 const { validationResult } = require('express-validator');
 
-const User = require('../models/user-model')
+const User = require('../models/user-model');
+const { sendMail } = require('../helpers/send-email-helper');
+const { fireErrorHandler } = require('../helpers/controllers-helper');
 
-const transporter = nodemailer.createTransport(sendgridTransport({
-    auth: {
-        api_key: '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'
-    }
-}));
 
 exports.getLogin = (req, res, next) => {
     res.render('auth/login', {
@@ -81,8 +77,8 @@ exports.postLogin = (req, res, next) => {
                         req.session.isAuthenticated = true;
                         req.session.user = user;
                         return req.session.save(err => {
-                            if (err) console.log(err);
-                            res.redirect('/');
+                            if (err) return fireErrorHandler(err, next);
+                            return res.redirect('/');
                         });
                     }
                     return res.status(422)
@@ -99,12 +95,10 @@ exports.postLogin = (req, res, next) => {
                 })
                 .catch(err => {
                     console.log(err);
-                    res.redirect('/login');
+                    return res.redirect('/login');
                 });
         })
-        .catch(err => {
-            console.log(err);
-        });
+        .catch(err => fireErrorHandler(err, next));
 }
 
 exports.postSignup = (req, res, next) => {
@@ -136,21 +130,23 @@ exports.postSignup = (req, res, next) => {
         })
         .then(result => {
             console.log('Signed Up!');
-            res.redirect('/login');
-            return transporter.sendMail({
-                to: email,
-                from: 'ahm.moh.has@gmail.com',
-                subject: 'Signup succeeded',
-                html: `<h1>LoL Shop</h1>
+            return sendMail(
+                '/login',
+                res,
+                {
+                    toEmail: email,
+                    subject: 'Signup succeeded',
+                    htmlContent: `<h1>LoL Shop</h1>
                         <p>You can reach our shop from <a href="http://localhost:1234/">this</a> link.</p>`
-            })
+                }
+            )
         })
-        .catch(err => console.log(err));
+        .catch(err => fireErrorHandler(err, next));
 }
 
 exports.postLogout = (req, res, next) => {
     req.session.destroy(err => {
-        if (err) console.log(err);
+        if (err) return fireErrorHandler(err, next);
         res.redirect('/');
     });
 }
@@ -160,39 +156,58 @@ exports.getReset = (req, res, next) => {
         path: '/reset',
         pageTitle: 'Reset Password',
         errorMessage: [],
-        oldInput: { email: "" }
+        oldInput: { email: "" },
+        validationErrors: []
     });
 }
 
 exports.postReset = (req, res, next) => {
+    const email = req.body.email;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422)
+            .render('auth/reset', {
+                path: '/reset',
+                pageTitle: 'Reset Password',
+                errorMessage: errors.array()[0].msg,
+                oldInput: {
+                    email: email,
+                },
+                validationErrors: errors.array()
+            });
+    }
     crypto.randomBytes(32, (err, buffer) => {
-        if (err) {
-            console.log(err);
-            return res.redirect('/reset');
-        }
+        if (err) return fireErrorHandler(err, next);
+
         const token = buffer.toString('hex');
-        User.findOne({ email: req.body.email })
+
+        User.findOne({ email: email })
             .then(user => {
                 if (!user) {
-                    req.flash('error', 'Email Not Exists');
-                    return res.redirect('/reset');
+                    return res.render('auth/reset', {
+                        path: '/reset',
+                        pageTitle: 'Reset Password',
+                        errorMessage: 'Email is not registerd',
+                        oldInput: { email: email },
+                        validationErrors: errors.array()
+                    });
                 }
                 user.resetToken = token;
                 user.resetTokenExpiration = Date.now() + 3600000; // 1 hour from now
-                return user.save();
+                return user.save()
+                    .then(result => {
+                        return sendMail(
+                            '/',
+                            res,
+                            {
+                                toEmail: email,
+                                subject: 'Reset Password',
+                                html: `<p>You requested a password reset</p>
+                         <p>You can reset your password from <a href="http://localhost:1234/new-password/${token}">this</a> link.</p>`
+                            })
+                    });
             })
-            .then(result => {
-                res.redirect('/');
-                return transporter.sendMail({
-                    to: req.body.email,
-                    from: 'ahm.moh.has@gmail.com',
-                    subject: 'Reset Password',
-                    html: `
-                    <p>You requested a password reset</p>
-                    <p>You can reset your password from <a href="http://localhost:1234/new-password/${token}">this</a> link.</p>`
-                });
-            })
-            .catch(err => console.log(err));
+            .catch(err => fireErrorHandler(err, next));
     })
 }
 
@@ -206,20 +221,42 @@ exports.getNewPassword = (req, res, next) => {
                     pageTitle: 'New Password',
                     errorMessage: [],
                     userID: user._id.toString(),
-                    passwordToken: token
+                    passwordToken: token,
+                    validationErrors: [],
+                    oldInput: {
+                        newPassword: '',
+                        confirmNewPassword: '',
+                    }
                 });
             }
             res.redirect('/page-not-found')
         })
-        .catch(err => console.log(err));
+        .catch(err => fireErrorHandler(err, next));
 }
 
 exports.postNewPassword = (req, res, next) => {
     const userID = req.body.userID;
     const newPassword = req.body.password;
+    const confirmNewPassword = req.body.confirmPassword;
     const passwordToken = req.body.passwordToken;
     let resetUser;
-
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        console.log(errors.array());
+        return res.status(422)
+            .render('auth/new-password', {
+                path: '/new-password',
+                pageTitle: 'New Password',
+                errorMessage: errors.array()[0].msg,
+                validationErrors: errors.array(),
+                userID: req.body.userID,
+                passwordToken: passwordToken,
+                oldInput: {
+                    newPassword: newPassword,
+                    confirmNewPassword: confirmNewPassword,
+                }
+            });
+    }
     User.findOne({ resetToken: passwordToken, resetTokenExpiration: { $gt: Date.now() }, _id: userID })
         .then(user => {
             resetUser = user;
@@ -231,16 +268,15 @@ exports.postNewPassword = (req, res, next) => {
                     return resetUser.save();
                 })
                 .then(result => {
-                    res.redirect('/login');
-                    return transporter.sendMail({
-                        to: req.body.email,
-                        from: 'ahm.moh.has@gmail.com',
-                        subject: 'Password Changed',
-                        html: `
-                    <h3>Password Changed</h3>
+                    return sendMail('/login',
+                        res,
+                        {
+                            toEmail: resetUser.email,
+                            subject: 'Password Changed',
+                            html: `<h3>Password Changed</h3>
                     <p>Your password has been changed. if you think this is wrong, feel free to contact us at lol@lol.com</p>`
-                    });
+                        })
                 })
         })
-        .catch(err => console.log(err));
+        .catch(err => fireErrorHandler(err, next));
 }

@@ -14,11 +14,10 @@ router.post('/login',
     [
         body('email')
             .isEmail()
-            .withMessage('Please enter a valid email address')
-            .normalizeEmail({ gmail_remove_dots: false }),
+            .withMessage('Please enter a valid email address'),
         body('password', 'Password has to be valid')
             .isLength({ min: 6 })
-            .isAlphanumeric()
+            .isString()
     ]
     , authController.postLogin);
 
@@ -34,15 +33,12 @@ router.post('/signup',
                             return Promise.reject('Email Already Exists');
                         }
                     })
-            })
-            .normalizeEmail({ gmail_remove_dots: false }),
-        body(
-            'password',
-        )
+            }),
+        body('password',)
             .isLength({ min: 6 })
             .withMessage('Please enter a password with at least 6 characters')
-            .isAlphanumeric()
-            .withMessage('Please enter a password with only numbers and text'),
+            .isString()
+            .withMessage('Please enter a password with string value'),
         body('confirmPassword')
             .custom((value, { req }) => {
                 if (value !== req.body.password) {
@@ -58,10 +54,39 @@ router.post('/logout', authController.postLogout);
 
 router.get('/reset', authController.getReset);
 
-router.post('/reset', authController.postReset);
+router.post('/reset',
+    [
+        check('email')
+            .isEmail()
+            .withMessage('Please entar a valid email')
+            .custom((value, { req }) => {
+                return User.findOne({ email: value })
+                    .then(userDoc => {
+                        if (!userDoc) {
+                            return Promise.reject('Email is not registerd');
+                        }
+                    })
+            }),
+    ]
+    , authController.postReset);
 
 router.get('/new-password/:token', authController.getNewPassword);
 
-router.post('/new-password', authController.postNewPassword);
+router.post('/new-password', [
+    body('password')
+        .isLength({ min: 6 })
+        .withMessage('Please enter a password with at least 6 characters')
+        .isString()
+        .withMessage('Please enter a password with string value'),
+    body('confirmPassword')
+        .custom((value, { req }) => {
+            if (value !== req.body.password) {
+                throw new Error('Passwords have to match');
+            }
+            return true;
+        })
+
+]
+    , authController.postNewPassword);
 
 module.exports = router;

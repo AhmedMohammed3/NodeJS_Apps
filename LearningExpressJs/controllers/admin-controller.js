@@ -38,7 +38,7 @@ exports.postAddProduct = (req, res, next) => {
             });
     }
     const product = new Product({
-        title: undefined,
+        title: title,
         price: price,
         description: description,
         imageUrl: imageUrl,
@@ -61,7 +61,10 @@ exports.getEditProduct = (req, res, next) => {
     Product.findById(productID)
         .then(product => {
             if (!product) {
-                return res.redirect('/admin/products');
+                return fireErrorHandler({
+                    message: 'Product is not found in DB',
+                    stack: __dirname
+                }, next);
             }
             if (product.userID.toString() !== req.user._id.toString()) {
                 return res.redirect('/page-not-found');
@@ -71,7 +74,6 @@ exports.getEditProduct = (req, res, next) => {
                 path: "/admin/edit-product",
                 editing: editMode,
                 product: product,
-                errorMessage: [],
                 hasError: false,
                 errorMessage: [],
                 validationErrors: []
@@ -131,8 +133,8 @@ exports.getProducts = (req, res, next) => {
             res.render("admin/admin-products", {
                 prods: products,
                 pageTitle: "Admin Panel - All Products",
-                path: "/admin/products"
-
+                path: "/admin/products",
+                errorMessage: []
             });
         })
         .catch(err => fireErrorHandler(err, next));

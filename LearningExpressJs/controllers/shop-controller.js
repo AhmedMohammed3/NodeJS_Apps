@@ -2,6 +2,7 @@ const Product = require('../models/product-model');
 const User = require('../models/user-model');
 // const Cart = require('../models/cart-model');
 const Order = require('../models/order-model');
+const { fireErrorHandler } = require('../helpers/controllers-helper');
 
 exports.getProducts = (req, res, next) => {
     Product.find()
@@ -12,7 +13,8 @@ exports.getProducts = (req, res, next) => {
                 path: "/products"
 
             });
-        }).catch(err => console.log(err));
+        })
+        .catch(err => fireErrorHandler(err, next));
 }
 
 exports.getProduct = (req, res, next) => {
@@ -25,7 +27,8 @@ exports.getProduct = (req, res, next) => {
                 path: "/products"
 
             });
-        }).catch(err => console.log(err));
+        })
+        .catch(err => fireErrorHandler(err, next));
 }
 
 exports.getIndex = (req, res, next) => {
@@ -36,7 +39,8 @@ exports.getIndex = (req, res, next) => {
                 pageTitle: "LoL Shop",
                 path: "/"
             });
-        }).catch(err => console.log(err));
+        })
+        .catch(err => fireErrorHandler(err, next));
 }
 
 exports.getCart = (req, res, next) => {
@@ -52,7 +56,7 @@ exports.getCart = (req, res, next) => {
 
             });
         })
-        .catch(err => console.log(err));
+        .catch(err => fireErrorHandler(err, next));
 }
 
 exports.postCart = (req, res, next) => {
@@ -65,7 +69,7 @@ exports.postCart = (req, res, next) => {
             console.log("Added To Cart");
             res.redirect('/cart');
         })
-        .catch(err => { console.log(err) });
+        .catch(err => fireErrorHandler(err, next));
 }
 
 exports.postCartDeleteItem = (req, res, next) => {
@@ -75,7 +79,7 @@ exports.postCartDeleteItem = (req, res, next) => {
             console.log('Product Deleted From Cart')
             res.redirect('/cart');
         })
-        .catch(err => console.log(err))
+        .catch(err => fireErrorHandler(err, next));
 }
 
 exports.postOrder = (req, res, next) => {
@@ -102,7 +106,7 @@ exports.postOrder = (req, res, next) => {
             console.log('Order Created!');
             res.redirect('/orders');
         })
-        .catch(err => console.log(err));
+        .catch(err => fireErrorHandler(err, next));
 }
 
 exports.getOrders = (req, res, next) => {
@@ -114,7 +118,7 @@ exports.getOrders = (req, res, next) => {
                 pageTitle: 'Your Orders'
             });
         })
-        .catch(err => console.log(err));
+        .catch(err => fireErrorHandler(err, next));
 }
 
 exports.getCheckout = (req, res, next) => {

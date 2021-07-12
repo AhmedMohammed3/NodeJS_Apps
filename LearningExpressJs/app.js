@@ -21,7 +21,11 @@ const app = express();
 const store = new MongoDBStore({
     uri: MONGODB_URI,
     collection: 'sessions'
-});
+},
+    (err) => {
+        if (err) console.log("Error Connecting to Mongodb server");
+    }
+);
 
 const csrfProtection = csrf();
 
@@ -41,6 +45,12 @@ app.use(csrfProtection);
 app.use(flash());
 
 app.use((req, res, next) => {
+    res.locals.isAuthenticated = req.session.isAuthenticated;
+    res.locals.csrfToken = req.csrfToken();
+    next();
+})
+
+app.use((req, res, next) => {
     if (!req.session.user) {
         return next();
     }
@@ -53,15 +63,9 @@ app.use((req, res, next) => {
             next();
         })
         .catch(err => {
-            throw new Error(err);
+            next(new Error(err));
         });
 });
-
-app.use((req, res, next) => {
-    res.locals.isAuthenticated = req.session.isAuthenticated;
-    res.locals.csrfToken = req.csrfToken();
-    next();
-})
 
 app.use("/admin", adminRoutes);
 app.use(shopRoutes);
@@ -69,8 +73,10 @@ app.use(authRoutes);
 app.use(errorRoute);
 
 app.use((error, req, res, next) => {
-    // res.status(error.httpStatusCode.render(...))
-    res.redirect('/500');
+    res.status(500).render("500", {
+        pageTitle: "Server Error",
+        path: "/500",
+    });
 })
 mongoose.connect(
     MONGODB_URI,
@@ -85,4 +91,7 @@ mongoose.connect(
         console.log('Connected To DB');
         app.listen(1234)
     })
-    .catch(err => console.log(err))
+    .catch(err => {
+        console.log("Error Connecting to Mongodb server");
+        app.listen(1234);
+    })
