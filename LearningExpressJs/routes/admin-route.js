@@ -15,12 +15,12 @@ router.post("/add-product", isAuth,
         check('title')
             .not().isEmpty()
             .withMessage('You can\'t add a product without a Title')
-        ,
-        check('imageUrl')
-            .not().isEmpty()
-            .withMessage('You can\'t add a product without an Image')
-            .isURL()
-            .withMessage('Image URL must be valid')
+        // ,
+        // check('imageUrl')
+        //     .not().isEmpty()
+        //     .withMessage('You can\'t add a product without an Image')
+        //     .isURL()
+        //     .withMessage('Image URL must be valid')
         ,
         check('price')
             .not().isEmpty()
@@ -42,11 +42,11 @@ router.post("/edit-product/", isAuth,
         body('title')
             .not().isEmpty()
             .withMessage('You can\'t add a product without a Title'),
-        body('imageUrl')
-            .not().isEmpty()
-            .withMessage('You can\'t add a product without an Image')
-            .isURL()
-            .withMessage('Image URL must be valid'),
+        // body('imageUrl')
+        //     .not().isEmpty()
+        //     .withMessage('You can\'t add a product without an Image')
+        //     .isURL()
+        //     .withMessage('Image URL must be valid'),
         body('price')
             .not().isEmpty()
             .withMessage('You can\'t add a product without a Price')

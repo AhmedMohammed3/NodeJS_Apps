@@ -1,8 +1,13 @@
+const fs = require('fs');
+const path = require('path');
+
+const PDFDocument = require('pdfkit');
+
 const Product = require('../models/product-model');
-const User = require('../models/user-model');
+
 // const Cart = require('../models/cart-model');
 const Order = require('../models/order-model');
-const { fireErrorHandler } = require('../helpers/controllers-helper');
+const { fireErrorHandler } = require('../helpers/error-helper');
 
 exports.getProducts = (req, res, next) => {
     Product.find()
@@ -74,7 +79,7 @@ exports.postCart = (req, res, next) => {
 
 exports.postCartDeleteItem = (req, res, next) => {
     const productID = req.body.productID;
-    req.user.deleteFromCart(productID)
+    return req.user.deleteFromCart(productID)
         .then(result => {
             console.log('Product Deleted From Cart')
             res.redirect('/cart');
@@ -117,6 +122,66 @@ exports.getOrders = (req, res, next) => {
                 path: '/orders',
                 pageTitle: 'Your Orders'
             });
+        })
+        .catch(err => fireErrorHandler(err, next));
+}
+
+exports.getInvoice = (req, res, next) => {
+    const orderID = req.params.orderID;
+    Order.findById(orderID)
+        .then(order => {
+            if (!order) {
+                return fireErrorHandler({
+                    message: 'No order found', stack: 'Line 132 - shop-controller.js'
+                }, next);
+            }
+            if (order.user.userID.toString() !== req.user._id.toString()) {
+                return fireErrorHandler({
+                    message: 'UnAuthorized Access', stack: 'Line 138 - shop-controller.js'
+                }, next);
+            }
+            const invoiceName = 'Invoice-' + orderID + '.pdf';
+            const invoicePath = path.join('data', 'invoices', invoiceName);
+
+            const pdfDocument = new PDFDocument();
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', 'inline; filename="' + invoiceName + '"');
+            pdfDocument.pipe(fs.createWriteStream(invoicePath));
+            pdfDocument.pipe(res);
+
+            pdfDocument.fontSize(26).text('Invoice',
+                { underline: true });
+            pdfDocument.text('----------------------------------');
+            let totalPrice = 0;
+            order.products.forEach(prod => {
+                totalPrice += prod.product.price * prod.quantity;
+                pdfDocument.fontSize(18).text(
+                    prod.product.title +
+                    ' - ' +
+                    prod.quantity +
+                    ' X $' +
+                    prod.product.price +
+                    '\n');
+            });
+            pdfDocument.fontSize(26).text('----------------------------------');
+            pdfDocument.fontSize(23).text('Total Price: $' + totalPrice);
+            pdfDocument.end();
+            //==================Send File as one bulk================================
+            // fs.readFile(invoicePath, (err, data) => {
+            //     if (err) return fireErrorHandler(err, next);
+            //     res.setHeader('Content-Type', 'application/pdf');
+            //     res.setHeader('Content-Disposition', 'inline; filename="' + invoiceName + '"');
+            //     res.send(data);
+            // })
+            //=======================================================================
+            //==================Send File with stream================================
+            // console.log('Creating Read Stream to file');
+            // const file = fs.createReadStream(invoicePath);
+            // console.log('Created Read Stream to file');
+            // res.setHeader('Content-Type', 'application/pdf');
+            // res.setHeader('Content-Disposition', 'inline; filename="' + invoiceName + '"');
+            // file.pipe(res); // response is write stream
+            //=======================================================================
         })
         .catch(err => fireErrorHandler(err, next));
 }
