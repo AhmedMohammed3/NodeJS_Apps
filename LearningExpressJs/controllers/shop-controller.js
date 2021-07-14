@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
+const stripe = require('stripe')('sk_test_51JDEh7Dp9HiZzPjX8HL03bRzN15DEPwadCZeaGqWuB48C7mejbCazOZKT2BinIGIURXslOw9x1dxio3GR6LCOwWu00eJIMSauz');
 const PDFDocument = require('pdfkit');
 
 const Product = require('../models/product-model');
@@ -120,7 +121,7 @@ exports.postCartDeleteItem = (req, res, next) => {
         .catch(err => fireErrorHandler(err, next));
 }
 
-exports.postOrder = (req, res, next) => {
+exports.getCheckoutSuccess = (req, res, next) => {
     req.user
         .populate('cart.items.productID')
         .execPopulate()
@@ -220,8 +221,42 @@ exports.getInvoice = (req, res, next) => {
 }
 
 exports.getCheckout = (req, res, next) => {
-    res.render('shop/chekout', {
-        path: '/checkout',
-        pageTitle: 'Checkout'
-    })
+    let products;
+    let totalPrice = 0;
+    req.user
+        .populate('cart.items.productID')
+        .execPopulate()
+        .then(user => {
+            products = user.cart.items;
+            totalPrice = 0;
+            products.forEach(product => {
+                totalPrice += product.productID.price * product.quantity;
+            });
+
+            return stripe.checkout.sessions.create({
+                payment_method_types: ['card'],
+                line_items: products.map(p => {
+                    return {
+                        name: p.productID.title,
+                        description: p.productID.description,
+                        amount: p.productID.price * 100,
+                        currency: 'usd',
+                        quantity: p.quantity
+                    }
+                }),
+                success_url: req.protocol + '://' + req.get('host') + '/checkout/success',
+                cancel_url: req.protocol + '://' + req.get('host') + '/checkout/cancel'
+            });
+        })
+        .then(session => {
+            res.render('shop/checkout', {
+                path: '/checkout',
+                pageTitle: 'Checkout',
+                products: products,
+                totalPrice: totalPrice,
+                sessionID: session.id
+            });
+        })
+        .catch(err => fireErrorHandler(err, next));
+
 }

@@ -168,7 +168,7 @@ exports.getProducts = (req, res, next) => {
             res.render("admin/admin-products", {
                 prods: products,
                 pageTitle: "Admin Panel - All Products",
-                path: "/admin/productss",
+                path: "/admin/products",
                 errorMessage: [],
                 currentPage: page,
                 hasNextPage: PRODUCTS_PER_PAGE * page < totalNumOfProducts,
@@ -181,8 +181,8 @@ exports.getProducts = (req, res, next) => {
         .catch(err => fireErrorHandler(err, next));
 }
 
-exports.postDeleteProduct = (req, res, next) => {
-    const productID = req.body.productID;
+exports.deleteProduct = (req, res, next) => {
+    const productID = req.params.productID;
     Product.findById(productID)
         .then(product => {
             if (!product) {
@@ -197,11 +197,11 @@ exports.postDeleteProduct = (req, res, next) => {
         .then(result => {
             if (result.deletedCount > 0) {
                 console.log("Product Deleted");
-                return res.redirect('/admin/products');
+                return res.status(200).json({ message: 'Success!' });
             }
-            return res.redirect('/page-not-found');
+            res.status(500).json({ message: 'Deleting product failed' });
         })
-        .catch(err => fireErrorHandler(err, next));
+        .catch(err => res.status(500).json({ message: 'Deleting product failed' }));
 }
 
 
