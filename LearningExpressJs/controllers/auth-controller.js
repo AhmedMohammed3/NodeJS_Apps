@@ -19,7 +19,8 @@ exports.getLogin = (req, res, next) => {
             email: "",
             password: ""
         },
-        validationErrors: []
+        validationErrors: [],
+        userName: ''
     });
 }
 
@@ -33,7 +34,8 @@ exports.getSignup = (req, res, next) => {
             password: "",
             confirmPassword: ""
         },
-        validationErrors: []
+        validationErrors: [],
+        userName: ''
     });
 }
 
@@ -159,7 +161,8 @@ exports.getReset = (req, res, next) => {
         pageTitle: 'Reset Password',
         errorMessage: [],
         oldInput: { email: "" },
-        validationErrors: []
+        validationErrors: [],
+        userName: ''
     });
 }
 
@@ -192,7 +195,8 @@ exports.postReset = (req, res, next) => {
                         pageTitle: 'Reset Password',
                         errorMessage: 'Email is not registerd',
                         oldInput: { email: email },
-                        validationErrors: errors.array()
+                        validationErrors: errors.array(),
+                        userName: ''
                     });
                 }
                 user.resetToken = token;
@@ -229,7 +233,8 @@ exports.getNewPassword = (req, res, next) => {
                     oldInput: {
                         newPassword: '',
                         confirmNewPassword: '',
-                    }
+                    },
+                    userName: ''
                 });
             }
             res.redirect('/page-not-found')

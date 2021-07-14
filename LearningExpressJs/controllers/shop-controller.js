@@ -33,7 +33,8 @@ exports.getProducts = (req, res, next) => {
                 hasPreviousPage: page > 1,
                 nextPage: page + 1,
                 previousPage: page - 1,
-                lastPage: Math.ceil(totalNumOfProducts / PRODUCTS_PER_PAGE)
+                lastPage: Math.ceil(totalNumOfProducts / PRODUCTS_PER_PAGE),
+                userName: req.user.email.split('@')[0]
             });
         })
         .catch(err => fireErrorHandler(err, next));
@@ -46,7 +47,8 @@ exports.getProduct = (req, res, next) => {
             res.render("shop/product-detail", {
                 product: product,
                 pageTitle: "\"" + product.title + "\" Details",
-                path: "/products"
+                path: "/products",
+                userName: req.user.email.split('@')[0]
 
             });
         })
@@ -76,7 +78,8 @@ exports.getIndex = (req, res, next) => {
                 hasPreviousPage: page > 1,
                 nextPage: page + 1,
                 previousPage: page - 1,
-                lastPage: Math.ceil(totalNumOfProducts / PRODUCTS_PER_PAGE)
+                lastPage: Math.ceil(totalNumOfProducts / PRODUCTS_PER_PAGE),
+                userName: req.user.email.split('@')[0]
             });
         })
         .catch(err => fireErrorHandler(err, next));
@@ -91,7 +94,8 @@ exports.getCart = (req, res, next) => {
             res.render('shop/cart', {
                 path: '/cart',
                 pageTitle: 'Your Cart',
-                products: cartProducts
+                products: cartProducts,
+                userName: req.user.email.split('@')[0]
 
             });
         })
@@ -154,7 +158,8 @@ exports.getOrders = (req, res, next) => {
             res.render('shop/orders', {
                 orders: orders,
                 path: '/orders',
-                pageTitle: 'Your Orders'
+                pageTitle: 'Your Orders',
+                userName: req.user.email.split('@')[0]
             });
         })
         .catch(err => fireErrorHandler(err, next));
@@ -240,7 +245,7 @@ exports.getCheckout = (req, res, next) => {
                         name: p.productID.title,
                         description: p.productID.description,
                         amount: p.productID.price * 100,
-                        currency: 'usd',
+                        currency: 'egp',
                         quantity: p.quantity
                     }
                 }),
@@ -254,7 +259,8 @@ exports.getCheckout = (req, res, next) => {
                 pageTitle: 'Checkout',
                 products: products,
                 totalPrice: totalPrice,
-                sessionID: session.id
+                sessionID: session.id,
+                userName: req.user.email.split('@')[0]
             });
         })
         .catch(err => fireErrorHandler(err, next));

@@ -14,7 +14,8 @@ exports.getAddProduct = (req, res, next) => {
         editing: false,
         errorMessage: [],
         hasError: false,
-        validationErrors: []
+        validationErrors: [],
+        userName: req.user.email.split('@')[0]
     });
 }
 
@@ -99,7 +100,8 @@ exports.getEditProduct = (req, res, next) => {
                 product: product,
                 hasError: false,
                 errorMessage: [],
-                validationErrors: []
+                validationErrors: [],
+                userName: req.user.email.split('@')[0]
             })
         })
         .catch(err => fireErrorHandler(err, next));
@@ -175,7 +177,8 @@ exports.getProducts = (req, res, next) => {
                 hasPreviousPage: page > 1,
                 nextPage: page + 1,
                 previousPage: page - 1,
-                lastPage: Math.ceil(totalNumOfProducts / PRODUCTS_PER_PAGE)
+                lastPage: Math.ceil(totalNumOfProducts / PRODUCTS_PER_PAGE),
+                userName: req.user.email.split('@')[0].split('@')[0]
             });
         })
         .catch(err => fireErrorHandler(err, next));
