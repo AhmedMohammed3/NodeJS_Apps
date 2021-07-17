@@ -7,33 +7,29 @@ const User = require('../models/user.model.js');
 
 
 // GET /feed/posts
-exports.getPosts = (req, res, next) => {
+exports.getPosts = async (req, res, next) => {
     const currentPage = req.query.page || 1;
     const perPage = 2;
-    let totalItems;
-    Post.find().countDocuments()
-        .then(count => {
-            totalItems = count;
-            return Post.find()
-                .skip((currentPage - 1) * perPage)
-                .limit(perPage);
-        })
-        .then(posts => {
-            res.status(200).json({
-                message: 'Fetched posts successfully',
-                posts: posts,
-                totalItems: totalItems
-            });
-        })
-        .catch(err => {
-            handleError(err, next);
+    try {
+        let totalItems = await Post.find().countDocuments()
+        const posts = await Post.find()
+            .populate('creator')
+            .skip((currentPage - 1) * perPage)
+            .limit(perPage);
+        res.status(200).json({
+            message: 'Fetched posts successfully',
+            posts: posts,
+            totalItems: totalItems
         });
-
-
+    }
+    catch (err) {
+        handleError(err, next);
+    }
 };
 
 // POST /feed/post
-exports.createPost = (req, res, next) => {
+exports.createPost = async (req, res, next) => {
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         throwError('Validation failed, entered data is incorrect.', 422);
@@ -44,61 +40,55 @@ exports.createPost = (req, res, next) => {
     const imageUrl = req.file.path.replace("\\", "/");
     const title = req.body.title;
     const content = req.body.content;
-    let creator;
     const post = new Post({
         title: title,
         imageUrl: imageUrl,
         content: content,
         creator: req.userId
     });
-    post.save()
-        .then(createdPost => {
-            return User.findById(req.userId);
-        })
-        .then(user => {
-            if (!user) {
-                throwError('Could not find user', 404);
+    try {
+        await post.save();
+        const creator = await User.findById(req.userId);
+        if (!creator) {
+            throwError('Could not find user', 404);
+        }
+        creator.posts.push(post);
+        await creator.save();
+        res.status(201).json({
+            message: 'Post created successfully!',
+            post: post,
+            creator: {
+                _id: creator._id,
+                name: creator.name
             }
-            creator = user;
-            user.posts.push(post);
-            return user.save();
-        })
-        .then(updatedUser => {
-            res.status(201).json({
-                message: 'Post created successfully!',
-                post: post,
-                creator: {
-                    _id: creator._id,
-                    name: creator.name
-                }
-            });
-        })
-        .catch(err => {
-            handleError(err, next);
         });
+    }
+    catch (err) {
+        handleError(err, next);
+    };
 }
 // GET /feed/post
-exports.getPost = (req, res, next) => {
+exports.getPost = async (req, res, next) => {
     const postId = req.params.postId;
-    Post.findById(postId)
-        .then(post => {
-            if (!post) {
-                throwError('Could not find post', 404);
-            }
-            res.status(200).json({ message: 'Post Fetched', post: post });
-        })
-        .catch(err => {
-            handleError(err, next);
-        });
+    const post = await Post.findById(postId)
+    try {
+        if (!post) {
+            throwError('Could not find post', 404);
+        }
+        res.status(200).json({ message: 'Post Fetched', post: post });
+    } catch (err) {
+        handleError(err, next);
+    };
 };
 
 // PUT /feed/post
 
-exports.updatePost = (req, res, next) => {
+exports.updatePost = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         throwError('Validation failed, entered data is incorrect.', 422);
     }
+
     const postId = req.params.postId;
     const title = req.body.title;
     const content = req.body.content;
@@ -109,58 +99,49 @@ exports.updatePost = (req, res, next) => {
     if (!imageUrl) {
         throwError('No image Provided!', 422);
     }
-    Post.findById(postId)
-        .then(post => {
-            if (!post) {
-                throwError('Could not find post', 404);
-            }
-            if (post.creator.toString() !== req.userId) {
-                throwError('Unauthorized', 403);
-            }
-            if (imageUrl !== post.imageUrl) {
-                clearImage(post.imageUrl);
-            }
-            post.title = title;
-            post.imageUrl = imageUrl;
-            post.content = content;
-            return post.save();
-        })
-        .then(updatedPost => {
-            res.status(200).json({ message: 'Post Updated!', post: updatedPost })
-        })
-        .catch(err => {
-            handleError(err, next);
-        });
+    try {
+        const post = await Post.findById(postId)
+        if (!post) {
+            throwError('Could not find post', 404);
+        }
+        if (post.creator.toString() !== req.userId) {
+            throwError('Unauthorized', 403);
+        }
+        if (imageUrl !== post.imageUrl) {
+            clearImage(post.imageUrl);
+        }
+        post.title = title;
+        post.imageUrl = imageUrl;
+        post.content = content;
+        const updatedPost = await post.save();
+        res.status(200).json({ message: 'Post Updated!', post: updatedPost })
+    }
+    catch (err) {
+        handleError(err, next);
+    };
 }
 
-exports.deletePost = (req, res, next) => {
+exports.deletePost = async (req, res, next) => {
     const postId = req.params.postId;
-    Post.findById(postId)
-        .then(post => {
-            if (!post) {
-                throwError('Could not find post', 404);
-            }
-            if (post.creator.toString() !== req.userId) {
-                throwError('Unauthorized Delete', 403);
-            }
-            // check logged in user
-            clearImage(post.imageUrl);
-            return Post.findByIdAndRemove(postId)
-        })
-        .then(deletedPost => {
-            return User.findById(req.userId);
-        })
-        .then(user => {
-            if (!user) {
-                throwError('Could not find user', 404);
-            }
-            user.posts.pull(postId);
-            return user.save();
-        })
-        .then(result => {
-            res.status(200).json({ message: 'Deleted Post!' })
-        })
-        .catch(err => {
-            handleError(err, next);
-        });
+    try {
+        const post = await Post.findById(postId)
+        if (!post) {
+            throwError('Could not find post', 404);
+        }
+        if (post.creator.toString() !== req.userId) {
+            throwError('Unauthorized Delete', 403);
+        }
+        // check logged in user
+        clearImage(post.imageUrl);
+        const deletedPost = await Post.findByIdAndRemove(postId)
+        const user = await User.findById(req.userId);
+        if (!user) {
+            throwError('Could not find user', 404);
+        }
+        user.posts.pull(postId);
+        const result = await user.save();
+        res.status(200).json({ message: 'Deleted Post!' })
+    } catch (err) {
+        handleError(err, next);
+    };
 }
