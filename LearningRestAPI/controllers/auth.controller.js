@@ -33,14 +33,13 @@ exports.putSignup = async (req, res, next) => {
 exports.postLogin = async (req, res, next) => {
     const email = req.body.email;
     const password = req.body.password;
-    let loadedUser;
+    
     try {
-        const user = await User.findOne({ email: email })
-        if (!user) {
+        const loadedUser = await User.findOne({ email: email })
+        if (!loadedUser) {
             throwError('Email is not registerd', 404);
         }
-        loadedUser = user;
-        const isEqual = await bcrypt.compare(password, user.password);
+        const isEqual = await bcrypt.compare(password, loadedUser.password);
         if (!isEqual) throwError('Wrong Password', 401);
         const token = jwt.sign({
             email: loadedUser.email,

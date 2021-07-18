@@ -4,6 +4,7 @@ exports.handleError = (err, next) => {
     }
     next(err);
 }
+
 exports.throwError = (msg, statusCode, data) => {
     const error = new Error(msg);
     error.statusCode = statusCode;
