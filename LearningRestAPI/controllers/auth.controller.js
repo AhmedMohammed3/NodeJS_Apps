@@ -49,11 +49,14 @@ exports.postLogin = async (req, res, next) => {
             SECRET_TOKEN,
             { expiresIn: '1h' });
         res.status(200).json({ token: token, userId: loadedUser._id.toString() })
+        return;
     }
     catch (err) {
         handleError(err, next);
+        return err;
     }
 }
+
 exports.getUserStatus = async (req, res, next) => {
     try {
         const user = await User.findById(req.userId)

@@ -53,7 +53,7 @@ exports.createPost = async (req, res, next) => {
             throwError('Could not find user', 404);
         }
         creator.posts.push(post);
-        await creator.save();
+        const savedUser = await creator.save();
         res.status(201).json({
             message: 'Post created successfully!',
             post: post,
@@ -62,6 +62,7 @@ exports.createPost = async (req, res, next) => {
                 name: creator.name
             }
         });
+        return savedUser;
     }
     catch (err) {
         handleError(err, next);
